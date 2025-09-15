@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Memoria: Pensamiento Sistémico</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 800px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2575fc;
+            margin-bottom: 20px;
+            font-size: 2.2rem;
+        }
+        
+        h2 {
+            color: #6a11cb;
+            margin: 20px 0 15px;
+            font-size: 1.6rem;
+        }
+        
+        .intro {
+            text-align: center;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .question-container {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .question {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        
+        .option {
+            background-color: #e9ecef;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+        
+        .option:hover {
+            background-color: #d8e2f3;
+            transform: translateY(-2px);
+        }
+        
+        .option.correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .option.incorrect {
+            background-color: #F44336;
+            color: white;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+        }
+        
+        button {
+            background-color: #2575fc;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #1c64e0;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .results h2 {
+            color: #2575fc;
+            margin-bottom: 20px;
+        }
+        
+        .results p {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            display: none;
+        }
+        
+        .feedback.correct {
+            border-left: 5px solid #4CAF50;
+        }
+        
+        .feedback.incorrect {
+            border-left: 5px solid #F44336;
+        }
+        
+        @media (min-width: 768px) {
+            .options {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Juego de Memoria: Enfoque del Pensamiento Sistémico</h1>
+        
+        <div class="intro">
+            <p>Pon a prueba tus conocimientos sobre el enfoque del pensamiento sistémico con este juego de preguntas y respuestas. ¡Aprende mientras te diviertes!</p>
+        </div>
+        
+        <div class="score-container">
+            <div class="score">Puntuación: <span id="score">0</span></div>
+            <div class="question-count">Pregunta: <span id="current-question">1</span>/<span id="total-questions">50</span></div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress-bar"></div>
+        </div>
+        
+        <div class="question-container">
+            <div class="question" id="question"></div>
+            <div class="options" id="options"></div>
+            <div class="feedback" id="feedback"></div>
+        </div>
+        
+        <div class="navigation">
+            <button id="prev-btn" disabled>Anterior</button>
+            <button id="next-btn">Siguiente</button>
+        </div>
+    </div>
+
+    <script>
+        // Preguntas y respuestas basadas en el documento
+        const questions = [
+            {
+                question: "¿Qué es un sistema según el enfoque sistémico?",
+                options: [
+                    "Un conjunto de elementos interrelacionados que trabajan juntos para cumplir un objetivo específico",
+                    "Una serie de procesos independientes que funcionan de manera aislada",
+                    "Un grupo de personas trabajando en el mismo espacio físico",
+                    "Un software que gestiona información"
+                ],
+                correctAnswer: "Un conjunto de elementos interrelacionados que trabajan juntos para cumplir un objetivo específico",
+                explanation: "Correcto. Un sistema es un conjunto de elementos interrelacionados que trabajan juntos para cumplir un objetivo específico."
+            },
+            {
+                question: "¿Cuál de las siguientes NO es una característica clave de los sistemas?",
+                options: [
+                    "Elementos o Componentes",
+                    "Aislamiento total del entorno",
+                    "Entradas (Inputs) y Salidas (Outputs)",
+                    "Retroalimentación (Feedback)"
+                ],
+                correctAnswer: "Aislamiento total del entorno",
+                explanation: "Correcto. Los sistemas no están aislados totalmente del entorno, sino que interactúan con él."
+            },
+            {
+                question: "¿Qué elemento del sistema corresponde a las condiciones y sucesos exteriores que influyen en su comportamiento?",
+                options: [
+                    "Entorno o Ambiente",
+                    "Elemento o Componente",
+                    "Relación",
+                    "Frontera"
+                ],
+                correctAnswer: "Entorno o Ambiente",
+                explanation: "Correcto. El entorno o ambiente son las condiciones y sucesos exteriores que influyen en el comportamiento del sistema."
+            },
+            {
+                question: "¿Qué tipo de sistema intercambia solo energía, pero no materia con su entorno?",
+                options: [
+                    "Sistema Cerrado",
+                    "Sistema Abierto",
+                    "Sistema Aislado",
+                    "Sistema Abstracto"
+                ],
+                correctAnswer: "Sistema Cerrado",
+                explanation: "Correcto. Un sistema cerrado intercambia solo energía, pero no materia con su entorno."
+            },
+            {
+                question: "¿Qué tipo de sistema no intercambia ni materia ni energía con su entorno?",
+                options: [
+                    "Sistema Aislado",
+                    "Sistema Cerrado",
+                    "Sistema Abierto",
+                    "Sistema Concreto"
+                ],
+                correctAnswer: "Sistema Aislado",
+                explanation: "Correcto. Un sistema aislado no intercambia ni materia ni energía con su entorno."
+            },
+            {
+                question: "¿Cuál de los siguientes es un ejemplo de sistema concreto?",
+                options: [
+                    "Una computadora",
+                    "El sistema decimal",
+                    "Un algoritmo matemático",
+                    "Una teoría científica"
+                ],
+                correctAnswer: "Una computadora",
+                explanation: "Correcto. Una computadora es un sistema concreto (físico o tangible)."
+            },
+            {
+                question: "¿Qué principio del enfoque sistémico establece que un sistema debe estudiarse en su totalidad, no solo a partir de la suma de sus partes?",
+                options: [
+                    "Holismo",
+                    "Interrelaciones",
+                    "Retroalimentación",
+                    "Adaptabilidad"
+                ],
+                correctAnswer: "Holismo",
+                explanation: "Correcto. El holismo establece que un sistema debe estudiarse en su totalidad, no solo a partir de la suma de sus partes."
+            },
+            {
+                question: "¿Qué mecanismo permite a un sistema ajustar su comportamiento en función de los resultados obtenidos?",
+                options: [
+                    "Retroalimentación (Feedback)",
+                    "Entrada (Input)",
+                    "Salida (Output)",
+                    "Frontera"
+                ],
+                correctAnswer: "Retroalimentación (Feedback)",
+                explanation: "Correcto. La retroalimentación es el mecanismo que permite a un sistema ajustar su comportamiento."
+            },
+            {
+                question: "¿Qué tipo de retroalimentación amplifica un comportamiento en el sistema?",
+                options: [
+                    "Retroalimentación positiva",
+                    "Retroalimentación negativa",
+                    "Retroalimentación neutra",
+                    "Retroalimentación inversa"
+                ],
+                correctAnswer: "Retroalimentación positiva",
+                explanation: "Correcto. La retroalimentación positiva amplifica un comportamiento en el sistema."
+            },
+            {
+                question: "¿Qué concepto del pensamiento sistémico se refiere a que el comportamiento global de un sistema no es simplemente la suma de sus partes?",
+                options: [
+                    "Emergencia",
+                    "Causalidad",
+                    "Pensamiento en bucles",
+                    "Límites del sistema"
+                ],
+                correctAnswer: "Emergencia",
+                explanation: "Correcto. La emergencia se refiere a que el comportamiento global de un sistema no es simplemente la suma de sus partes."
+            },
+            {
+                question: "Según Mario Bunge, ¿qué es un enfoque?",
+                options: [
+                    "Una manera de ver las cosas o las ideas y en consecuencia también de tratar los problemas relativos a ellas",
+                    "Un método científico para resolver problemas complejos",
+                    "Una técnica de análisis cuantitativo",
+                    "Un proceso de toma de decisiones"
+                ],
+                correctAnswer: "Una manera de ver las cosas o las ideas y en consecuencia también de tratar los problemas relativos a ellas",
+                explanation: "Correcto. Según Mario Bunge, un enfoque es una manera de ver las cosas o las ideas y en consecuencia también de tratar los problemas relativos a ellas."
+            },
+            {
+                question: "¿Qué elemento del sistema corresponde a la delimitación que identifica qué pertenece y qué no pertenece al sistema?",
+                options: [
+                    "Frontera",
+                    "Entorno",
+                    "Relación",
+                    "Atributo"
+                ],
+                correctAnswer: "Frontera",
+                explanation: "Correcto. La frontera corresponde a la delimitación del sistema."
+            },
+            {
+                question: "¿Qué característica del enfoque sistémico integra conocimientos de diversas disciplinas?",
+                options: [
+                    "Interdisciplinario",
+                    "Organizado",
+                    "Creativo",
+                    "Empírico"
+                ],
+                correctAnswer: "Interdisciplinario",
+                explanation: "Correcto. La característica interdisciplinaria integra conocimientos de diversas disciplinas."
+            },
+            {
+                question: "¿En qué área de la ingeniería de sistemas se aplica el enfoque sistémico para diseñar soluciones tecnológicas basadas en la interoperabilidad?",
+                options: [
+                    "Arquitectura de Sistemas de Información",
+                    "Ciberseguridad y Redes",
+                    "Modelado de Sistemas",
+                    "Gestión de Proyectos de Sistemas"
+                ],
+                correctAnswer: "Arquitectura de Sistemas de Información",
+                explanation: "Correcto. En la Arquitectura de Sistemas de Información se aplica el enfoque sistémico para diseñar soluciones tecnológicas basadas en la interoperabilidad."
+            },
+            {
+                question: "¿Qué ventaja ofrece el enfoque sistémico en la ingeniería de sistemas?",
+                options: [
+                    "Mayor comprensión de la complejidad",
+                    "Simplificación excesiva de los problemas",
+                    "Enfoque en partes aisladas del sistema",
+                    "Reducción de la necesidad de adaptación"
+                ],
+                correctAnswer: "Mayor comprensión de la complejidad",
+                explanation: "Correcto. El enfoque sistémico ofrece una mayor comprensión de la complejidad al visualizar el sistema en su conjunto."
+            },
+            {
+                question: "¿Qué es el pensamiento sistémico?",
+                options: [
+                    "Una forma de analizar problemas considerando la interrelación entre los componentes de un sistema y su contexto",
+                    "Un método para aislar componentes individuales de un sistema",
+                    "Una técnica para optimizar procesos de manera independiente",
+                    "Un enfoque que prioritiza las partes sobre el todo"
+                ],
+                correctAnswer: "Una forma de analizar problemas considerando la interrelación entre los componentes de un sistema y su contexto",
+                explanation: "Correcto. El pensamiento sistémico es una forma de analizar problemas considerando la interrelación entre los componentes de un sistema y su contexto."
+            },
+            {
+                question: "¿Qué ladrillo del pensamiento sistémico busca entender las causas profundas y la estructura subyacente del sistema?",
+                options: [
+                    "Causalidad y Estructuras Subyacentes",
+                    "Retroalimentación",
+                    "Emergencia",
+                    "Pensamiento en Bucles y Ciclos"
+                ],
+                correctAnswer: "Causalidad y Estructuras Subyacentes",
+                explanation: "Correcto. La Causalidad y Estructuras Subyacentes buscan entender las causas profundas y la estructura subyacente del sistema."
+            },
+            {
+                question: "¿Qué ladrillo del pensamiento sistémico se refiere a que los sistemas operan en ciclos de interacción?",
+                options: [
+                    "Pensamiento en Bucles y Ciclos",
+                    "Límites del Sistema y Entorno",
+                    "Emergencia",
+                    "Retroalimentación"
+                ],
+                correctAnswer: "Pensamiento en Bucles y Ciclos",
+                explanation: "Correcto. El Pensamiento en Bucles y Ciclos se refiere a que los sistemas operan en ciclos de interacción."
+            },
+            {
+                question: "¿Quién propuso la Teoría General de Sistemas en la que se basa el Enfoque Sistémico?",
+                options: [
+                    "Ludwig von Bertalanffy",
+                    "Mario Bunge",
+                    "Albert Einstein",
+                    "Isaac Newton"
+                ],
+                correctAnswer: "Ludwig von Bertalanffy",
+                explanation: "Correcto. Ludwig von Bertalanffy propuso la Teoría General de Sistemas."
+            },
+            {
+                question: "¿Qué elemento del sistema define el fin para el cual fueron organizados sus elementos?",
+                options: [
+                    "Objetivo o Propósito",
+                    "Entrada",
+                    "Salida",
+                    "Relación"
+                ],
+                correctAnswer: "Objetivo o Propósito",
+                explanation: "Correcto. El Objetivo o Propósito define el fin para el cual fueron organizados los elementos del sistema."
+            },
+            {
+                question: "¿Qué elemento del sistema corresponde a las características y propiedades estructurales o funcionales que lo definen?",
+                options: [
+                    "Atributo",
+                    "Entorno",
+                    "Relación",
+                    "Frontera"
+                ],
+                correctAnswer: "Atributo",
+                explanation: "Correcto. El atributo corresponde a las características y propiedades estructurales o funcionales que definen al sistema."
+            },
+            {
+                question: "¿Qué elemento del sistema se refiere a la situación que se da entre dos o más elementos que lo conforman?",
+                options: [
+                    "Relación",
+                    "Entrada",
+                    "Salida",
+                    "Atributo"
+                ],
+                correctAnswer: "Relación",
+                explanation: "Correcto. La relación se refiere a la situación que se da entre dos o más elementos que conforman el sistema."
+            },
+            {
+                question: "¿Qué elemento del sistema es todo aquello que recibe o importa de su entorno exterior?",
+                options: [
+                    "Entrada (Input)",
+                    "Salida (Output)",
+                    "Retroalimentación (Feedback)",
+                    "Proceso"
+                ],
+                correctAnswer: "Entrada (Input)",
+                explanation: "Correcto. La entrada es todo aquello que el sistema recibe o importa de su entorno exterior."
+            },
+            {
+                question: "¿Qué elemento del sistema es el resultado final de su operación o proceso?",
+                options: [
+                    "Salida (Output)",
+                    "Entrada (Input)",
+                    "Retroalimentación (Feedback)",
+                    "Proceso"
+                ],
+                correctAnswer: "Salida (Output)",
+                explanation: "Correcto. La salida es el resultado final de la operación o proceso de un sistema."
+            },
+            {
+                question: "Según la ley de conservación de la energía, ¿cómo se comporta la energía en un sistema?",
+                options: [
+                    "No se destruye ni se pierde, se transforma",
+                    "Se crea constantemente a partir de la materia",
+                    "Se pierde inevitablemente en cada proceso",
+                    "Solo puede transferirse como calor"
+                ],
+                correctAnswer: "No se destruye ni se pierde, se transforma",
+                explanation: "Correcto. Según la ley de conservación de la energía, esta no se destruye ni se pierde, se transforma."
+            },
+            {
+                question: "¿Qué tipo de sistema está en relación permanente con su entorno, intercambiando energía, materia o información?",
+                options: [
+                    "Sistema Abierto",
+                    "Sistema Cerrado",
+                    "Sistema Aislado",
+                    "Sistema Abstracto"
+                ],
+                correctAnswer: "Sistema Abierto",
+                explanation: "Correcto. Los sistemas abiertos están en relación permanente con su entorno, intercambiando energía, materia o información."
+            },
+            {
+                question: "¿Cuál de los siguientes es un ejemplo de sistema abstracto?",
+                options: [
+                    "Sistema Decimal",
+                    "Cuerpo Humano",
+                    "Computadora",
+                    "Automóvil"
+                ],
+                correctAnswer: "Sistema Decimal",
+                explanation: "Correcto. El Sistema Decimal es un ejemplo de sistema abstracto (simbólico o conceptual)."
+            },
+            {
+                question: "¿Qué característica del enfoque sistémico estudia los sistemas como conjuntos estructurados de elementos interconectados?",
+                options: [
+                    "Organizado",
+                    "Creativo",
+                    "Teórico",
+                    "Empírico"
+                ],
+                correctAnswer: "Organizado",
+                explanation: "Correcto. La característica 'Organizado' estudia los sistemas como conjuntos estructurados de elementos interconectados."
+            },
+            {
+                question: "¿Qué característica del enfoque sistémico propone soluciones innovadoras mediante el análisis de interacciones?",
+                options: [
+                    "Creativo",
+                    "Teórico",
+                    "Empírico",
+                    "Pragmático"
+                ],
+                correctAnswer: "Creativo",
+                explanation: "Correcto. La característica 'Creativo' propone soluciones innovadoras mediante el análisis de interacciones."
+            },
+            {
+                question: "¿Qué característica del enfoque sistémico se fundamenta en principios y modelos abstractos?",
+                options: [
+                    "Teórico",
+                    "Empírico",
+                    "Pragmático",
+                    "Integrador"
+                ],
+                correctAnswer: "Teórico",
+                explanation: "Correcto. La característica 'Teórico' se fundamenta en principios y modelos abstractos."
+            },
+            {
+                question: "¿Qué característica del enfoque sistémico se basa en observaciones directas, mediciones y experimentaciones?",
+                options: [
+                    "Empírico",
+                    "Teórico",
+                    "Pragmático",
+                    "Integrador"
+                ],
+                correctAnswer: "Empírico",
+                explanation: "Correcto. La característica 'Empírico' se basa en observaciones directas, mediciones y experimentaciones."
+            },
+            {
+                question: "¿Qué característica del enfoque sistémico es práctica y orientada a la solución, adaptándose a limitaciones de recursos?",
+                options: [
+                    "Pragmático",
+                    "Teórico",
+                    "Empírico",
+                    "Integrador"
+                ],
+                correctAnswer: "Pragmático",
+                explanation: "Correcto. La característica 'Pragmático' es práctica y orientada a la solución, adaptándose a limitaciones de recursos."
+            },
+            {
+                question: "¿Qué característica del enfoque sistémico une diferentes componentes o subsistemas de manera coherente?",
+                options: [
+                    "Integrador",
+                    "Teórico",
+                    "Empírico",
+                    "Pragmático"
+                ],
+                correctAnswer: "Integrador",
+                explanation: "Correcto. La característica 'Integrador' une diferentes componentes o subsistemas de manera coherente."
+            },
+            {
+                question: "¿Qué principio del enfoque sistémico establece que los componentes de un sistema interactúan entre sí?",
+                options: [
+                    "Interrelaciones",
+                    "Holismo",
+                    "Estructura y Función",
+                    "Adaptabilidad"
+                ],
+                correctAnswer: "Interrelaciones",
+                explanation: "Correcto. El principio de 'Interrelaciones' establece que los componentes de un sistema interactúan entre sí."
+            },
+            {
+                question: "¿Qué principio del enfoque sistémico establece que un sistema tiene una arquitectura definida y cumple un propósito específico?",
+                options: [
+                    "Estructura y Función",
+                    "Holismo",
+                    "Interrelaciones",
+                    "Retroalimentación"
+                ],
+                correctAnswer: "Estructura y Función",
+                explanation: "Correcto. El principio de 'Estructura y Función' establece que un sistema tiene una arquitectura definida y cumple un propósito específico."
+            },
+            {
+                question: "¿Qué principio del enfoque sistémico permite la regulación y mejora del sistema mediante información del entorno?",
+                options: [
+                    "Retroalimentación",
+                    "Holismo",
+                    "Interrelaciones",
+                    "Adaptabilidad"
+                ],
+                correctAnswer: "Retroalimentación",
+                explanation: "Correcto. El principio de 'Retroalimentación' permite la regulación y mejora del sistema mediante información del entorno."
+            },
+            {
+                question: "¿Qué principio del enfoque sistémico establece que los sistemas cambian con el tiempo para responder a nuevas condiciones?",
+                options: [
+                    "Adaptabilidad y Evolución",
+                    "Holismo",
+                    "Interrelaciones",
+                    "Estructura y Función"
+                ],
+                correctAnswer: "Adaptabilidad y Evolución",
+                explanation: "Correcto. El principio de 'Adaptabilidad y Evolución' establece que los sistemas cambian con el tiempo para responder a nuevas condiciones."
+            },
+            {
+                question: "¿En qué área de la ingeniería de sistemas se utilizan diagramas de flujo y modelos matemáticos para analizar sistemas?",
+                options: [
+                    "Modelado de Sistemas",
+                    "Gestión de Proyectos de Sistemas",
+                    "Arquitectura de Sistemas de Información",
+                    "Ciberseguridad y Redes"
+                ],
+                correctAnswer: "Modelado de Sistemas",
+                explanation: "Correcto. En el 'Modelado de Sistemas' se utilizan diagramas de flujo y modelos matemáticos para analizar sistemas."
+            },
+            {
+                question: "¿En qué área de la ingeniería de sistemas se considera el impacto de cada componente en el sistema completo?",
+                options: [
+                    "Gestión de Proyectos de Sistemas",
+                    "Modelado de Sistemas",
+                    "Arquitectura de Sistemas de Información",
+                    "Ciberseguridad y Redes"
+                ],
+                correctAnswer: "Gestión de Proyectos de Sistemas",
+                explanation: "Correcto. En la 'Gestión de Proyectos de Sistemas' se considera el impacto de cada componente en el sistema completo."
+            },
+            {
+                question: "¿En qué área de la ingeniería de sistemas se analizan sistemas de comunicación considerando amenazas y vulnerabilidades?",
+                options: [
+                    "Ciberseguridad y Redes",
+                    "Modelado de Sistemas",
+                    "Gestión de Proyectos de Sistemas",
+                    "Arquitectura de Sistemas de Información"
+                ],
+                correctAnswer: "Ciberseguridad y Redes",
+                explanation: "Correcto. En 'Ciberseguridad y Redes' se analizan sistemas de comunicación considerando amenazas y vulnerabilidades."
+            },
+            {
+                question: "¿Qué ventaja del enfoque sistémico permite identificar redundancias o ineficiencias en los sistemas?",
+                options: [
+                    "Optimización de recursos",
+                    "Mayor comprensión de la complejidad",
+                    "Toma de decisiones estratégicas",
+                    "Mayor capacidad de adaptación"
+                ],
+                correctAnswer: "Optimización de recursos",
+                explanation: "Correcto. La 'Optimización de recursos' permite identificar redundancias o ineficiencias en los sistemas."
+            },
+            {
+                question: "¿Qué ventaja del enfoque sistémico facilita la identificación de problemas y la evaluación de soluciones?",
+                options: [
+                    "Toma de decisiones estratégicas",
+                    "Mayor comprensión de la complejidad",
+                    "Optimización de recursos",
+                    "Mayor capacidad de adaptación"
+                ],
+                correctAnswer: "Toma de decisiones estratégicas",
+                explanation: "Correcto. La 'Toma de decisiones estratégicas' facilita la identificación de problemas y la evaluación de soluciones."
+            },
+            {
+                question: "¿Qué ventaja del enfoque sistémico permite a los sistemas ajustarse mejor a los cambios del entorno?",
+                options: [
+                    "Mayor capacidad de adaptación",
+                    "Mayor comprensión de la complejidad",
+                    "Optimización de recursos",
+                    "Toma de decisiones estratégicas"
+                ],
+                correctAnswer: "Mayor capacidad de adaptación",
+                explanation: "Correcto. La 'Mayor capacidad de adaptación' permite a los sistemas ajustarse mejor a los cambios del entorno."
+            },
+            {
+                question: "¿En qué se diferencia el pensamiento sistémico del enfoque sistémico?",
+                options: [
+                    "El pensamiento sistémico es conceptual y reflexivo, mientras que el enfoque sistémico es práctico y metodológico",
+                    "El pensamiento sistémico es práctico y el enfoque sistémico es teórico",
+                    "El pensamiento sistémico se aplica solo en ingeniería, mientras que el enfoque sistémico es universal",
+                    "No hay diferencia, son términos sinónimos"
+                ],
+                correctAnswer: "El pensamiento sistémico es conceptual y reflexivo, mientras que el enfoque sistémico es práctico y metodológico",
+                explanation: "Correcto. El pensamiento sistémico es conceptual y reflexivo (busca comprender el sistema), mientras que el enfoque sistémico es práctico y metodológico (se usa para diseñar o intervenir sistemas)."
+            },
+            {
+                question: "¿Qué ladrillo del pensamiento sistémico se refiere al mecanismo mediante el cual la información sobre la salida se convierte en entrada?",
+                options: [
+                    "Retroalimentación (Feedback)",
+                    "Causalidad y Estructuras Subyacentes",
+                    "Emergencia y Comportamiento del Sistema",
+                    "Pensamiento en Bucles y Ciclos"
+                ],
+                correctAnswer: "Retroalimentación (Feedback)",
+                explanation: "Correcto. La 'Retroalimentación' es el mecanismo mediante el cual la información sobre la salida se convierte en entrada."
+            },
+            {
+                question: "¿Qué ladrillo del pensamiento sistémico implica que todo sistema opera dentro de un entorno con límites definidos?",
+                options: [
+                    "Límites del Sistema y Entorno",
+                    "Retroalimentación",
+                    "Causalidad y Estructuras Subyacentes",
+                    "Emergencia y Comportamiento del Sistema"
+                ],
+                correctAnswer: "Límites del Sistema y Entorno",
+                explanation: "Correcto. Los 'Límites del Sistema y Entorno' implican que todo sistema opera dentro de un entorno con límites definidos."
+            },
+            {
+                question: "Según el pensamiento sistémico, ¿cómo se deben analizar los problemas?",
+                options: [
+                    "Considerando la interrelación entre los componentes de un sistema y su contexto",
+                    "Aislando cada componente para estudiarlo por separado",
+                    "Enfocándose únicamente en las partes más importantes",
+                    "Ignorando el entorno para simplificar el análisis"
+                ],
+                correctAnswer: "Considerando la interrelación entre los componentes de un sistema y su contexto",
+                explanation: "Correcto. Según el pensamiento sistémico, se deben analizar los problemas considerando la interrelación entre los componentes de un sistema y su contexto."
+            },
+            {
+                question: "¿Qué ejemplo ilustra mejor el concepto de emergencia en el pensamiento sistémico?",
+                options: [
+                    "La latencia en una red no se debe solo a la velocidad de los cables, sino a la interacción entre múltiples factores",
+                    "Un servidor lento siempre es causado por falta de memoria RAM",
+                    "Cada componente de un sistema funciona de manera independiente",
+                    "El rendimiento de un sistema es simplemente la suma del rendimiento de sus partes"
+                ],
+                correctAnswer: "La latencia en una red no se debe solo a la velocidad de los cables, sino a la interacción entre múltiples factores",
+                explanation: "Correcto. La emergencia implica que el comportamiento global de un sistema no es simplemente la suma de sus partes, sino que emergen propiedades nuevas de la interacción de sus elementos."
+            },
+            {
+                question: "¿Qué ejemplo ilustra mejor el pensamiento en bucles y ciclos?",
+                options: [
+                    "El ciclo de DevOps (Desarrollo, Pruebas, Implementación y Monitoreo) para mejorar continuamente el software",
+                    "Un proceso lineal de desarrollo sin retroalimentación",
+                    "Un sistema que funciona de manera aislada sin interactuar con su entorno",
+                    "Un algoritmo que procesa datos de manera secuencial sin iteraciones"
+                ],
+                correctAnswer: "El ciclo de DevOps (Desarrollo, Pruebas, Implementación y Monitoreo) para mejorar continuamente el software",
+                explanation: "Correcto. El pensamiento en bucles y ciclos reconoce que los sistemas operan en ciclos de interacción donde las acciones generan efectos que influyen en nuevas acciones."
+            }
+        ];
+
+        // Variables de estado del juego
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = new Array(questions.length).fill(null);
+
+        // Elementos DOM
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const scoreElement = document.getElementById('score');
+        const currentQuestionElement = document.getElementById('current-question');
+        const totalQuestionsElement = document.getElementById('total-questions');
+        const progressBarElement = document.getElementById('progress-bar');
+        const prevButton = document.getElementById('prev-btn');
+        const nextButton = document.getElementById('next-btn');
+        const feedbackElement = document.getElementById('feedback');
+
+        // Mezclar las opciones de respuesta para cada pregunta
+        function shuffleOptions(options) {
+            for (let i = options.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [options[i], options[j]] = [options[j], options[i]];
+            }
+            return options;
+        }
+
+        // Inicializar el juego
+        function initGame() {
+            totalQuestionsElement.textContent = questions.length;
+            
+            // Mezclar opciones para todas las preguntas
+            questions.forEach(q => {
+                q.options = shuffleOptions([...q.options]);
+            });
+            
+            showQuestion();
+            updateProgressBar();
+        }
+
+        // Mostrar la pregunta actual
+        function showQuestion() {
+            const question = questions[currentQuestionIndex];
+            questionElement.textContent = question.question;
+            
+            optionsElement.innerHTML = '';
+            currentQuestionElement.textContent = currentQuestionIndex + 1;
+            
+            question.options.forEach((option) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option');
+                
+                // Si el usuario ya respondió esta pregunta, mostrar la respuesta correcta/incorrecta
+                if (userAnswers[currentQuestionIndex] !== null) {
+                    if (option === question.correctAnswer) {
+                        button.classList.add('correct');
+                    } else if (option === userAnswers[currentQuestionIndex] && option !== question.correctAnswer) {
+                        button.classList.add('incorrect');
+                    }
+                }
+                
+                button.addEventListener('click', () => selectOption(option));
+                optionsElement.appendChild(button);
+            });
+            
+            // Mostrar retroalimentación si la pregunta ya fue respondida
+            if (userAnswers[currentQuestionIndex] !== null) {
+                feedbackElement.textContent = question.explanation;
+                feedbackElement.classList.add(userAnswers[currentQuestionIndex] === question.correctAnswer ? 'correct' : 'incorrect');
+                feedbackElement.style.display = 'block';
+            } else {
+                feedbackElement.style.display = 'none';
+            }
+            
+            // Actualizar estado de los botones de navegación
+            prevButton.disabled = currentQuestionIndex === 0;
+            nextButton.textContent = currentQuestionIndex === questions.length - 1 ? 'Finalizar' : 'Siguiente';
+        }
+
+        // Seleccionar una opción
+        function selectOption(selectedOption) {
+            // Si ya respondió esta pregunta, no permitir cambiar la respuesta
+            if (userAnswers[currentQuestionIndex] !== null) return;
+            
+            const question = questions[currentQuestionIndex];
+            userAnswers[currentQuestionIndex] = selectedOption;
+            
+            // Verificar si la respuesta es correcta
+            if (selectedOption === question.correctAnswer) {
+                score++;
+                scoreElement.textContent = score;
+            }
+            
+            // Mostrar retroalimentación
+            feedbackElement.textContent = question.explanation;
+            feedbackElement.classList.add(selectedOption === question.correctAnswer ? 'correct' : 'incorrect');
+            feedbackElement.style.display = 'block';
+            
+            // Resaltar la respuesta correcta e incorrecta
+            const options = optionsElement.querySelectorAll('.option');
+            options.forEach(option => {
+                if (option.textContent === question.correctAnswer) {
+                    option.classList.add('correct');
+                } else if (option.textContent === selectedOption && option.textContent !== question.correctAnswer) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            updateProgressBar();
+        }
+
+        // Actualizar barra de progreso
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressBarElement.style.width = `${progress}%`;
+        }
+
+        // Navegar a la pregunta anterior
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion();
+            }
+        }
+
+        // Navegar a la siguiente pregunta o finalizar el juego
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion();
+            } else {
+                // Mostrar resultados finales
+                showResults();
+            }
+        }
+
+        // Mostrar resultados finales
+        function showResults() {
+            const container = document.querySelector('.container');
+            container.innerHTML = `
+                <div class="results">
+                    <h2>¡Juego Terminado!</h2>
+                    <p>Tu puntuación final: <strong>${score}/${questions.length}</strong></p>
+                    <p>Porcentaje de aciertos: <strong>${Math.round((score / questions.length) * 100)}%</strong></p>
+                    <p>${getResultMessage(score, questions.length)}</p>
+                    <button onclick="location.reload()">Jugar Nuevamente</button>
+                </div>
+            `;
+        }
+
+        // Obtener mensaje de resultado según el puntaje
+        function getResultMessage(score, total) {
+            const percentage = (score / total) * 100;
+            
+            if (percentage >= 90) {
+                return "¡Excelente! Dominas completamente los conceptos del pensamiento sistémico.";
+            } else if (percentage >= 70) {
+                return "¡Muy bien! Tienes un buen conocimiento del pensamiento sistémico.";
+            } else if (percentage >= 50) {
+                return "Buen intento. Sigue estudiando para mejorar tu comprensión del pensamiento sistémico.";
+            } else {
+                return "Sigue practicando. Revisa el material y vuelve a intentarlo.";
+            }
+        }
+
+        // Event listeners para los botones de navegación
+        prevButton.addEventListener('click', prevQuestion);
+        nextButton.addEventListener('click', nextQuestion);
+
+        // Iniciar el juego cuando se carga la página
+        window.onload = initGame;
+    </script>
+</body>
+</html>
